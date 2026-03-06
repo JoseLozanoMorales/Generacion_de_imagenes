@@ -1,3 +1,16 @@
 <resources>
     <string name="app_name">Generación de imagenes</string>
+    <string name="google_ml_kit">Google ML Kit</string>
+    <string name="galeria">Galería</string>
+    <string name="camara">Cámara</string>
+    <string name="ocr">OCR</string>
+    <string name="rostros">Rostros</string>
+    <string name="resultados">Resultados:</string>
+    <string name="selected_image_description">Imagen seleccionada</string>
+    <string name="error_loading_image">Error al cargar la imagen</string>
+    <string name="select_image_first">Seleccione una imagen primero</string>
+    <string name="no_text_found">No hay Texto</string>
+    <string name="error_processing_image">Error al procesar imagen</string>
+    <string name="no_faces_found">No Hay rostros</string>
+    <string name="faces_found">Hay %d rostro(s)</string>
 </resources>
