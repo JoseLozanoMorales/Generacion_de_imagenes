@@ -111,4 +111,15 @@ public class MainActivity extends AppCompatActivity implements OnSuccessListener
     public void onFailure(@NonNull Exception e) {
         txtResults.setText(R.string.error_processing_image);
     }
+
+    public void abrirGaleria(View view) {
+        Intent i = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        galleryLauncher.launch(i);
+    }
+
+    public void abrirCamara(View view) {
+        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        cameraLauncher.launch(intent);
+    }
+
 }
