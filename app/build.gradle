@@ -2,22 +2,33 @@ plugins {
     alias(libs.plugins.android.application)
 }
 
+// 1. CARGAMOS local.properties AQUÍ (fuera del bloque android)
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file('local.properties')
+if (localPropertiesFile.exists()) {
+    localProperties.load(new FileInputStream(localPropertiesFile))
+}
+
 android {
     namespace 'com.example.generacindeimagenes'
-    compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
-    }
+    compileSdk 36
 
     defaultConfig {
         applicationId "com.example.generacindeimagenes"
         minSdk 24
-        targetSdk 36
+        targetSdk 35
         versionCode 1
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        // 2. AHORA SÍ PODEMOS USAR localProperties
+        def apiKey = localProperties.getProperty("OPENAI_API_KEY") ?: ""
+        buildConfigField "String", "OPENAI_API_KEY", "\"${apiKey}\""
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
 
     buildTypes {
@@ -36,7 +47,7 @@ dependencies {
     implementation 'com.google.mlkit:face-detection:16.1.5'
     implementation 'com.google.mlkit:text-recognition:16.0.1'
     implementation 'com.google.mlkit:image-labeling:17.0.7'
-
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
     implementation libs.appcompat
     implementation libs.material
     implementation libs.activity
