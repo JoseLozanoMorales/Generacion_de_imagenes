@@ -5,6 +5,7 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -61,7 +62,8 @@ public class MainActivity extends AppCompatActivity implements OnSuccessListener
 
     private String nacionalidadDetectada = "";
 
-    private static final String API_KEY = com.example.generacindeimagenes.BuildConfig.OPENAI_API_KEY;    private Bitmap mSelectedImage;
+    private static final String API_KEY = com.example.generacindeimagenes.BuildConfig.OPENAI_API_KEY;
+    private Bitmap mSelectedImage;
     private ActivityResultLauncher<Intent> galleryLauncher;
     private ActivityResultLauncher<Intent> cameraLauncher;
 
@@ -140,7 +142,7 @@ public class MainActivity extends AppCompatActivity implements OnSuccessListener
         cameraLauncher.launch(intent);
     }
 
-    private String bitmapToBase64(Bitmap bitmap){
+    private String bitmapToBase64(Bitmap bitmap) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         bitmap.compress(Bitmap.CompressFormat.JPEG, 90, baos);
         byte[] imageBytes = baos.toByteArray();
@@ -250,15 +252,17 @@ public class MainActivity extends AppCompatActivity implements OnSuccessListener
         }).start();
     }
 
+    // Reemplaza tu método generarImagenConRostro con este:
+
     public void generarImagenConRostro(View view) {
 
-        if(mSelectedImage == null){
-            Toast.makeText(this,"Primero selecciona una imagen",Toast.LENGTH_SHORT).show();
+        if (mSelectedImage == null) {
+            Toast.makeText(this, "Primero selecciona una imagen", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        if(nacionalidadDetectada.isEmpty()){
-            Toast.makeText(this,"Primero detecta la nacionalidad",Toast.LENGTH_SHORT).show();
+        if (nacionalidadDetectada.isEmpty()) {
+            Toast.makeText(this, "Primero detecta la nacionalidad", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -266,27 +270,39 @@ public class MainActivity extends AppCompatActivity implements OnSuccessListener
 
             try {
 
-                OkHttpClient client = new OkHttpClient();
+                OkHttpClient client = new OkHttpClient.Builder()
+                        .connectTimeout(90, java.util.concurrent.TimeUnit.SECONDS)
+                        .readTimeout(90, java.util.concurrent.TimeUnit.SECONDS)
+                        .writeTimeout(90, java.util.concurrent.TimeUnit.SECONDS)
+                        .build();
 
-                // OpenAI Edits requiere formato PNG y la imagen debe ser cuadrada
+                Bitmap imageReady = procesarImagenParaOpenAI(mSelectedImage);
+
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                mSelectedImage.compress(Bitmap.CompressFormat.PNG, 100, baos);
+                imageReady.compress(Bitmap.CompressFormat.PNG, 100, baos);
                 byte[] imageBytes = baos.toByteArray();
 
-                String prompt = "Transform the person in the image into a member of the "
-                        + nacionalidadDetectada +
-                        " indigenous culture of Ecuador. Keep the same face and identity. "
-                        + "Traditional clothing, cultural accessories, realistic photo.";
+                String prompt =
+                        "Usa la imagen proporcionada como referencia EXACTA del rostro. "
+                                + "Debe ser claramente la misma persona, misma identidad. "
+                                + "Mantén exactamente las mismas facciones faciales: ojos, nariz, boca y forma del rostro. "
+                                + "Genera una imagen de CUERPO COMPLETO. "
+                                + "La persona debe aparecer como miembro de la nacionalidad ecuatoriana "
+                                + nacionalidadDetectada + ". "
+                                + "Vestimenta tradicional auténtica, accesorios culturales reales, pintura facial tradicional en caso de que aplique. "
+                                + "Ambientado en un entorno natural relacionado con su cultura (selva amazónica, montaña andina o comunidad indígena). "
+                                + "Estilo fotorrealista, iluminación natural, alta calidad";
 
-                // Construcción del MultipartBody
                 RequestBody requestBody = new MultipartBody.Builder()
                         .setType(MultipartBody.FORM)
-                        .addFormDataPart("model", "dall-e-2")
+                        .addFormDataPart("model", "gpt-image-1")
                         .addFormDataPart("prompt", prompt)
-                        .addFormDataPart("n", "1")
                         .addFormDataPart("size", "1024x1024")
-                        .addFormDataPart("image", "user_image.png",
-                                RequestBody.create(MediaType.parse("image/png"), imageBytes))
+                        .addFormDataPart(
+                                "image",
+                                "user.png",
+                                RequestBody.create(MediaType.parse("image/png"), imageBytes)
+                        )
                         .build();
 
                 Request request = new Request.Builder()
@@ -296,18 +312,67 @@ public class MainActivity extends AppCompatActivity implements OnSuccessListener
                         .build();
 
                 Response response = client.newCall(request).execute();
-
                 String result = response.body().string();
 
-                Intent intent = new Intent(MainActivity.this, MainActivity2.class);
-                intent.putExtra("imagen", result);
-                startActivity(intent);
+                JSONObject jsonObject = new JSONObject(result);
+
+                if (response.isSuccessful() && jsonObject.has("data")) {
+
+                    String base64Image = jsonObject
+                            .getJSONArray("data")
+                            .getJSONObject(0)
+                            .getString("b64_json");
+
+                    byte[] decoded = Base64.decode(base64Image, Base64.DEFAULT);
+                    Bitmap bitmap = BitmapFactory.decodeByteArray(decoded, 0, decoded.length);
+
+                    ImageHolder.generatedImage = bitmap;
+
+                    Intent intent = new Intent(MainActivity.this, MainActivity2.class);
+                    startActivity(intent);
+
+                } else {
+
+                    String errorMsg = jsonObject.has("error")
+                            ? jsonObject.getJSONObject("error").getString("message")
+                            : result;
+
+                    runOnUiThread(() ->
+                            Toast.makeText(this, "Error API: " + errorMsg, Toast.LENGTH_LONG).show()
+                    );
+                }
 
             } catch (Exception e) {
+
                 e.printStackTrace();
-                runOnUiThread(() -> Toast.makeText(this, "Error en la generación", Toast.LENGTH_SHORT).show());
+
+                runOnUiThread(() ->
+                        Toast.makeText(this, "Error técnico: " + e.getMessage(), Toast.LENGTH_LONG).show()
+                );
             }
 
         }).start();
     }
+
+    private Bitmap procesarImagenParaOpenAI(Bitmap bitmap) {
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+        int newEdge = Math.min(width, height);
+        int xOffset = (width - newEdge) / 2;
+        int yOffset = (height - newEdge) / 2;
+
+        // Crear en ARGB_8888 para soportar transparencia (Alpha)
+        Bitmap squareBitmap = Bitmap.createBitmap(newEdge, newEdge, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(squareBitmap);
+        canvas.drawBitmap(bitmap, -xOffset, -yOffset, null);
+
+        // TRUCO PARA OPENAI: Hacemos el primer píxel transparente (Alpha = 0)
+        // Esto cumple con el requisito de "image must have transparency"
+        squareBitmap.setPixel(0, 0, Color.TRANSPARENT);
+
+        // Redimensionar a 512x512 para que sea liviano y no de "timeout"
+        return Bitmap.createScaledBitmap(squareBitmap, 1024, 1024, true);
+    }
+
+
 }
