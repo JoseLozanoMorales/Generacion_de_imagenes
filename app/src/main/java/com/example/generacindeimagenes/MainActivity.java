@@ -166,9 +166,14 @@ public class MainActivity extends AppCompatActivity implements OnSuccessListener
                 // 1. Mensaje de Sistema: Foco exclusivo en facciones faciales
                 JSONObject systemMessage = new JSONObject();
                 systemMessage.put("role", "system");
-                systemMessage.put("content", "You are an expert in Ecuadorian facial morphology. " +
-                        "Your task is to identify the specific indigenous group from a list that best matches the person's facial features. " +
-                        "Be highly selective and precise. Avoid bias towards the last items of the list.");
+                systemMessage.put("content",
+                        "Eres un clasificador. Tu tarea es seleccionar OBLIGATORIAMENTE una nacionalidad "
+                                + "de la lista proporcionada. Analiza los rasgos faciales de la persona en la imagen "
+                                + "(estructura ósea, ojos, pómulos, forma del rostro). "
+                                + "Debes escoger SIEMPRE la nacionalidad más parecida de la lista. "
+                                + "Nunca respondas que no puedes identificar. "
+                                + "Nunca des explicaciones. "
+                                + "Responde SOLO con el nombre exacto de una nacionalidad de la lista.");
                 messages.put(systemMessage);
 
                 // 2. Ejemplos de "entrenamiento" para evitar que repita siempre lo mismo
@@ -191,10 +196,14 @@ public class MainActivity extends AppCompatActivity implements OnSuccessListener
                 JSONObject textPart = new JSONObject();
                 textPart.put("type", "text");
                 // Estructura invertida con foco solo en la cara
-                textPart.put("text", "AVAILABLE NATIONALITIES:\n" + listaNacionalidades + "\n\n" +
-                        "TASK: Analyze ONLY the person's facial features (bone structure, eyes, etc.) in the image. " +
-                        "Based ONLY on the face, output the name of the group from the list that has the closest resemblance.");
-
+                textPart.put("text",
+                        "LISTA DE NACIONALIDADES:\n" + listaNacionalidades + "\n\n"
+                                + "INSTRUCCIONES:\n"
+                                + "- Analiza SOLO los rasgos faciales de la persona.\n"
+                                + "- Debes seleccionar obligatoriamente UNA nacionalidad de la lista.\n"
+                                + "- Si no estás seguro, elige la que MÁS se parezca.\n"
+                                + "- NO digas que no puedes identificar.\n"
+                                + "- Responde SOLO con el nombre exacto de la nacionalidad.");
                 JSONObject imagePart = new JSONObject();
                 imagePart.put("type", "image_url");
                 JSONObject imageUrl = new JSONObject();
