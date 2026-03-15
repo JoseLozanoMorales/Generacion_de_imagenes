@@ -8,6 +8,7 @@ import java.io.FileOutputStream;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -31,6 +32,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -106,8 +108,10 @@ public class MainActivity extends AppCompatActivity implements OnSuccessListener
                             mSelectedImage = rotateImageIfRequired(mSelectedImage, imageUri);
                             mSelectedImage = resizeBitmap(mSelectedImage, 1024);
                             mImageView.setImageBitmap(mSelectedImage);
-                            // Desactivar continuar si se cambia la imagen hasta detectar nueva nacionalidad
+                            
+                            // Resetear estado del botón Continuar
                             btnContinuar.setEnabled(false);
+                            btnContinuar.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.disabled_gray)));
                             nacionalidadDetectada = "";
                         } catch (IOException e) {
                             Toast.makeText(this, "Error al cargar la imagen", Toast.LENGTH_SHORT).show();
@@ -128,8 +132,10 @@ public class MainActivity extends AppCompatActivity implements OnSuccessListener
                         }
                         mSelectedImage = resizeBitmap(mSelectedImage, 1024);
                         mImageView.setImageBitmap(mSelectedImage);
-                        // Desactivar continuar si se toma nueva foto hasta detectar nacionalidad
+                        
+                        // Resetear estado del botón Continuar
                         btnContinuar.setEnabled(false);
+                        btnContinuar.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.disabled_gray)));
                         nacionalidadDetectada = "";
                     }
                 });
@@ -348,6 +354,7 @@ public class MainActivity extends AppCompatActivity implements OnSuccessListener
                         Toast.makeText(this, "Nacionalidad: " + nacionalidadDetectada, Toast.LENGTH_LONG).show();
                         // ACTIVAR EL BOTÓN CONTINUAR AQUÍ
                         btnContinuar.setEnabled(true);
+                        btnContinuar.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.forest_medium)));
                     });
                 }
 
@@ -431,4 +438,3 @@ public class MainActivity extends AppCompatActivity implements OnSuccessListener
 
 
 }
-

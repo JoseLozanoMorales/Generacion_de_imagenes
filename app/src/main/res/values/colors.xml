@@ -2,4 +2,9 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="forest_dark">#1B4332</color>
+    <color name="forest_medium">#2D6A4F</color>
+    <color name="forest_light">#D8F3DC</color>
+    <color name="earth_brown">#4E342E</color>
+    <color name="disabled_gray">#808080</color>
 </resources>
