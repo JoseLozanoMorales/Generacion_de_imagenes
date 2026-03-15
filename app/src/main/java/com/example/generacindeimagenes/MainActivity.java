@@ -1,5 +1,10 @@
 package com.example.generacindeimagenes;
 
+import androidx.work.Data;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkManager;
+import java.io.FileOutputStream;
+
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -82,6 +87,10 @@ public class MainActivity extends AppCompatActivity implements OnSuccessListener
 
         if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(new String[]{Manifest.permission.CAMERA}, 100);
+        }
+
+        if (android.os.Build.VERSION.SDK_INT >= 33) {
+            requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 101);
         }
 
         mImageView = findViewById(R.id.image_view);
@@ -243,6 +252,9 @@ public class MainActivity extends AppCompatActivity implements OnSuccessListener
     }
 
     public void detectarNacionalidad(View view) {
+
+        Toast.makeText(this, "Detectando nacionalidad...", Toast.LENGTH_SHORT).show();
+
         if (mSelectedImage == null) {
             Toast.makeText(this, "Primero selecciona una imagen", Toast.LENGTH_SHORT).show();
             return;
@@ -345,8 +357,6 @@ public class MainActivity extends AppCompatActivity implements OnSuccessListener
         }).start();
     }
 
-    // Reemplaza tu método generarImagenConRostro con este:
-
     public void generarImagenConRostro(View view) {
 
         if (mSelectedImage == null) {
@@ -359,93 +369,46 @@ public class MainActivity extends AppCompatActivity implements OnSuccessListener
             return;
         }
 
-        new Thread(() -> {
+        Bitmap imageReady = procesarImagenParaOpenAI(mSelectedImage);
 
-            try {
+        /*ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        imageReady.compress(Bitmap.CompressFormat.PNG, 100, baos);
+        String base64 = Base64.encodeToString(baos.toByteArray(), Base64.DEFAULT);
 
-                OkHttpClient client = new OkHttpClient.Builder()
-                        .connectTimeout(90, java.util.concurrent.TimeUnit.SECONDS)
-                        .readTimeout(90, java.util.concurrent.TimeUnit.SECONDS)
-                        .writeTimeout(90, java.util.concurrent.TimeUnit.SECONDS)
+        Data inputData = new Data.Builder()
+                .putString("imagen", base64)
+                .putString("nacionalidad", nacionalidadDetectada)
+                .build();*/
+
+        File file = new File(getCacheDir(), "image.png");
+
+        try {
+            FileOutputStream fos = new FileOutputStream(file);
+            imageReady.compress(Bitmap.CompressFormat.PNG, 100, fos);
+            fos.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        Data inputData = new Data.Builder()
+                .putString("imagen_path", file.getAbsolutePath())
+                .putString("nacionalidad", nacionalidadDetectada)
+                .build();
+
+        OneTimeWorkRequest workRequest =
+                new OneTimeWorkRequest.Builder(ImageGenerationWorker.class)
+                        .setInputData(inputData)
                         .build();
 
-                Bitmap imageReady = procesarImagenParaOpenAI(mSelectedImage);
+        // cancelar trabajos anteriores
+        WorkManager.getInstance(this).cancelAllWork();
 
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                imageReady.compress(Bitmap.CompressFormat.PNG, 100, baos);
-                byte[] imageBytes = baos.toByteArray();
+        // ejecutar el nuevo
+        WorkManager.getInstance(this).enqueue(workRequest);
 
-                String prompt =
-                        "Usa la imagen proporcionada como referencia EXACTA del rostro. "
-                                + "Debe ser claramente la misma persona, misma identidad. "
-                                + "Mantén exactamente las mismas facciones faciales: ojos, nariz, boca y forma del rostro. "
-                                + "Genera una imagen de CUERPO COMPLETO. "
-                                + "La persona debe aparecer como miembro de la nacionalidad ecuatoriana "
-                                + nacionalidadDetectada + ". "
-                                + "Vestimenta tradicional auténtica, accesorios culturales reales, pintura facial tradicional en caso de que aplique. "
-                                + "Ambientado en un entorno natural relacionado con su cultura (selva amazónica, montaña andina o comunidad indígena). "
-                                + "Estilo fotorrealista, iluminación natural, alta calidad";
-
-                RequestBody requestBody = new MultipartBody.Builder()
-                        .setType(MultipartBody.FORM)
-                        .addFormDataPart("model", "gpt-image-1")
-                        .addFormDataPart("prompt", prompt)
-                        .addFormDataPart("size", "1024x1024")
-                        .addFormDataPart(
-                                "image",
-                                "user.png",
-                                RequestBody.create(MediaType.parse("image/png"), imageBytes)
-                        )
-                        .build();
-
-                Request request = new Request.Builder()
-                        .url("https://api.openai.com/v1/images/edits")
-                        .addHeader("Authorization", "Bearer " + API_KEY)
-                        .post(requestBody)
-                        .build();
-
-                Response response = client.newCall(request).execute();
-                String result = response.body().string();
-
-                JSONObject jsonObject = new JSONObject(result);
-
-                if (response.isSuccessful() && jsonObject.has("data")) {
-
-                    String base64Image = jsonObject
-                            .getJSONArray("data")
-                            .getJSONObject(0)
-                            .getString("b64_json");
-
-                    byte[] decoded = Base64.decode(base64Image, Base64.DEFAULT);
-                    Bitmap bitmap = BitmapFactory.decodeByteArray(decoded, 0, decoded.length);
-
-                    ImageHolder.generatedImage = bitmap;
-
-                    Intent intent = new Intent(MainActivity.this, MainActivity2.class);
-                    startActivity(intent);
-
-                } else {
-
-                    String errorMsg = jsonObject.has("error")
-                            ? jsonObject.getJSONObject("error").getString("message")
-                            : result;
-
-                    runOnUiThread(() ->
-                            Toast.makeText(this, "Error API: " + errorMsg, Toast.LENGTH_LONG).show()
-                    );
-                }
-
-            } catch (Exception e) {
-
-                e.printStackTrace();
-
-                runOnUiThread(() ->
-                        Toast.makeText(this, "Error técnico: " + e.getMessage(), Toast.LENGTH_LONG).show()
-                );
-            }
-
-        }).start();
+        Toast.makeText(this, "Generando imagen en segundo plano...", Toast.LENGTH_LONG).show();
     }
+
     private Bitmap procesarImagenParaOpenAI(Bitmap bitmap) {
         int width = bitmap.getWidth();
         int height = bitmap.getHeight();
