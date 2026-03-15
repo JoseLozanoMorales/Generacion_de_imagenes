@@ -15,11 +15,11 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="32dp"
         android:fontFamily="serif"
-        android:text="Yo Ancestral"
+        android:letterSpacing="0.1"
+        android:text="YO ANCESTRAL"
         android:textColor="@color/forest_light"
         android:textSize="38sp"
         android:textStyle="bold"
-        android:letterSpacing="0.1"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
