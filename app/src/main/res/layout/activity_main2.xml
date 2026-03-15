@@ -5,44 +5,62 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/forest_dark"
+    android:padding="24dp"
     tools:context=".MainActivity2">
-
-    <ImageView
-        android:id="@+id/image_view2"
-        android:layout_width="390dp"
-        android:layout_height="519dp"
-        android:layout_margin="10dp"
-        android:contentDescription="@string/selected_image_description"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.238"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.551" />
 
     <TextView
         android:id="@+id/textView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Resultado:"
-        android:textSize="24sp"
+        android:layout_marginTop="24dp"
+        android:fontFamily="serif"
+        android:text="Tu Origen"
+        android:textColor="@color/forest_light"
+        android:textSize="32sp"
         android:textStyle="bold"
-        app:layout_constraintBottom_toTopOf="@+id/image_view2"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.045"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <Button
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cardResult"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="24dp"
+        android:layout_marginBottom="32dp"
+        app:cardCornerRadius="32dp"
+        app:cardElevation="10dp"
+        app:cardBackgroundColor="#1AFFFFFF"
+        app:strokeColor="@color/forest_medium"
+        app:strokeWidth="2dp"
+        app:layout_constraintBottom_toTopOf="@+id/btdescargar"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textView">
+
+        <ImageView
+            android:id="@+id/image_view2"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:contentDescription="@string/selected_image_description"
+            android:scaleType="centerInside"
+            android:padding="12dp" />
+    </com.google.android.material.card.MaterialCardView>
+
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/btdescargar"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Descargar"
+        android:layout_height="64dp"
+        android:layout_marginBottom="16dp"
+        android:text="Guardar Recuerdo"
+        android:textAllCaps="false"
+        android:textSize="18sp"
         app:icon="@drawable/descargar"
+        app:backgroundTint="@color/earth_brown"
+        app:cornerRadius="20dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.498"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/image_view2"
-        app:layout_constraintVertical_bias="0.375" />
+        app:layout_constraintStart_toStartOf="parent" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

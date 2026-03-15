@@ -3,6 +3,7 @@ package com.example.generacindeimagenes;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
@@ -23,6 +24,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -118,7 +120,10 @@ public class MainActivity extends AppCompatActivity
                             mSelectedImage = rotateImageIfRequired(mSelectedImage, imageUri);
                             mSelectedImage = resizeBitmap(mSelectedImage, 1024);
                             mImageView.setImageBitmap(mSelectedImage);
+                            
+                            // Resetear estado del botón Continuar
                             btnContinuar.setEnabled(false);
+                            btnContinuar.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.disabled_gray)));
                             nacionalidadDetectada = "";
                         } catch (IOException e) {
                             Toast.makeText(this,
@@ -143,6 +148,7 @@ public class MainActivity extends AppCompatActivity
                         mSelectedImage = resizeBitmap(mSelectedImage, 1024);
                         mImageView.setImageBitmap(mSelectedImage);
                         btnContinuar.setEnabled(false);
+                        btnContinuar.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.disabled_gray)));
                         nacionalidadDetectada = "";
                     }
                 });
@@ -367,6 +373,7 @@ public class MainActivity extends AppCompatActivity
                                 "Nacionalidad: " + nacionalidadDetectada,
                                 Toast.LENGTH_LONG).show();
                         btnContinuar.setEnabled(true);
+                        btnContinuar.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.forest_medium)));
                     });
                 }
 
@@ -450,8 +457,5 @@ public class MainActivity extends AppCompatActivity
         if (txtResults != null) txtResults.setText(resultados.toString());
     }
 
-    @Override
-    public void onFailure(@NonNull Exception e) {
-        if (txtResults != null) txtResults.setText("Error al procesar la imagen");
-    }
+
 }
