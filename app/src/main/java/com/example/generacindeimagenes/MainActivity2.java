@@ -28,15 +28,8 @@ public class MainActivity2 extends AppCompatActivity {
 
         imageView = findViewById(R.id.image_view2);
 
-        String base64 = getIntent().getStringExtra("imagen");
-
-        if(base64 != null){
-
-            byte[] decoded = Base64.decode(base64, Base64.DEFAULT);
-            Bitmap bitmap = BitmapFactory.decodeByteArray(decoded,0,decoded.length);
-
-            imageView.setImageBitmap(bitmap);
-
+        if (ImageHolder.generatedImage != null) {
+            imageView.setImageBitmap(ImageHolder.generatedImage);
         }
     }
 }
