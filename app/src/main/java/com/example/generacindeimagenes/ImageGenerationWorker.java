@@ -3,7 +3,6 @@ package com.example.generacindeimagenes;
 import android.app.PendingIntent;
 import android.content.Intent;
 
-
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
