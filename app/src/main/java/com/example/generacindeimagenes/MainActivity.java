@@ -41,6 +41,9 @@ import androidx.exifinterface.media.ExifInterface;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.mlkit.vision.common.InputImage;
+import com.google.mlkit.vision.face.FaceDetection;
+import com.google.mlkit.vision.face.FaceDetector;
 import com.google.mlkit.vision.text.Text;
 
 import org.json.JSONArray;
@@ -108,7 +111,7 @@ public class MainActivity extends AppCompatActivity implements OnSuccessListener
                             mSelectedImage = rotateImageIfRequired(mSelectedImage, imageUri);
                             mSelectedImage = resizeBitmap(mSelectedImage, 1024);
                             mImageView.setImageBitmap(mSelectedImage);
-
+                            
                             // Resetear estado del botón Continuar
                             btnContinuar.setEnabled(false);
                             btnContinuar.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.disabled_gray)));
@@ -132,7 +135,7 @@ public class MainActivity extends AppCompatActivity implements OnSuccessListener
                         }
                         mSelectedImage = resizeBitmap(mSelectedImage, 1024);
                         mImageView.setImageBitmap(mSelectedImage);
-
+                        
                         // Resetear estado del botón Continuar
                         btnContinuar.setEnabled(false);
                         btnContinuar.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.disabled_gray)));
@@ -258,14 +261,31 @@ public class MainActivity extends AppCompatActivity implements OnSuccessListener
     }
 
     public void detectarNacionalidad(View view) {
-
-        Toast.makeText(this, "Detectando nacionalidad...", Toast.LENGTH_SHORT).show();
-
         if (mSelectedImage == null) {
             Toast.makeText(this, "Primero selecciona una imagen", Toast.LENGTH_SHORT).show();
             return;
         }
 
+        Toast.makeText(this, "Validando rostro...", Toast.LENGTH_SHORT).show();
+
+        InputImage image = InputImage.fromBitmap(mSelectedImage, 0);
+        FaceDetector detector = FaceDetection.getClient();
+
+        detector.process(image)
+                .addOnSuccessListener(faces -> {
+                    if (faces.isEmpty()) {
+                        Toast.makeText(this, "No se detectó ningún rostro. Por favor, sube una foto más clara.", Toast.LENGTH_LONG).show();
+                    } else {
+                        ejecutarDeteccionConOpenAI();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Error al validar la imagen", Toast.LENGTH_SHORT).show();
+                });
+    }
+
+    private void ejecutarDeteccionConOpenAI() {
+        Toast.makeText(this, "Detectando nacionalidad...", Toast.LENGTH_SHORT).show();
         String base64 = bitmapToBase64(mSelectedImage);
 
         new Thread(() -> {
@@ -343,19 +363,27 @@ public class MainActivity extends AppCompatActivity implements OnSuccessListener
                     nacionalidadDetectada = jsonObject.getJSONArray("choices")
                             .getJSONObject(0).getJSONObject("message").getString("content").trim();
 
+                    boolean encontrada = false;
                     for (String n : listaNacionalidades.split(", ")) {
                         if (nacionalidadDetectada.contains(n)) {
                             nacionalidadDetectada = n;
+                            encontrada = true;
                             break;
                         }
                     }
 
-                    runOnUiThread(() -> {
-                        Toast.makeText(this, "Nacionalidad: " + nacionalidadDetectada, Toast.LENGTH_LONG).show();
-                        // ACTIVAR EL BOTÓN CONTINUAR AQUÍ
-                        btnContinuar.setEnabled(true);
-                        btnContinuar.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.forest_medium)));
-                    });
+                    if (encontrada) {
+                        runOnUiThread(() -> {
+                            Toast.makeText(this, "Nacionalidad: " + nacionalidadDetectada, Toast.LENGTH_LONG).show();
+                            // ACTIVAR EL BOTÓN CONTINUAR AQUÍ
+                            btnContinuar.setEnabled(true);
+                            btnContinuar.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.forest_medium)));
+                        });
+                    } else {
+                        runOnUiThread(() -> {
+                            Toast.makeText(this, "No se pudo identificar una nacionalidad válida.", Toast.LENGTH_LONG).show();
+                        });
+                    }
                 }
 
             } catch (Exception e) {
