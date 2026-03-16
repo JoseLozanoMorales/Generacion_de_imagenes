@@ -4,5 +4,5 @@ import android.graphics.Bitmap;
 
 public class ImageHolder {
     public static Bitmap generatedImage;
-
+    public static String nationality = "";
 }
