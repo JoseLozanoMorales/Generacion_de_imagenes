@@ -28,6 +28,7 @@ import java.io.OutputStream;
 public class MainActivity2 extends AppCompatActivity {
     ImageView imageView;
     Button btnDescargar;
+    Button btnVolver;
 
     private final ActivityResultLauncher<Intent> saveLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
@@ -54,12 +55,21 @@ public class MainActivity2 extends AppCompatActivity {
 
         imageView = findViewById(R.id.image_view2);
         btnDescargar = findViewById(R.id.btdescargar);
+        btnVolver = findViewById(R.id.btnVolver);
 
         if (ImageHolder.generatedImage != null) {
             imageView.setImageBitmap(ImageHolder.generatedImage);
         }
 
         btnDescargar.setOnClickListener(v -> abrirSelectorDeArchivos());
+        
+        btnVolver.setOnClickListener(v -> {
+            // Regresa a MainActivity limpiando el stack para evitar comportamiento extraño
+            Intent intent = new Intent(MainActivity2.this, MainActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            startActivity(intent);
+            finish();
+        });
     }
 
     private void abrirSelectorDeArchivos() {
