@@ -13,4 +13,6 @@
     <string name="error_processing_image">Error al procesar imagen</string>
     <string name="no_faces_found">No Hay rostros</string>
     <string name="faces_found">Hay %d rostro(s)</string>
+    <string name="btn_volver">Volver</string>
+    <string name="btn_guardar">Guardar</string>
 </resources>
