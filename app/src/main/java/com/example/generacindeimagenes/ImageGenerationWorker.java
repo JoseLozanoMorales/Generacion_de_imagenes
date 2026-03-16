@@ -56,8 +56,9 @@ public class ImageGenerationWorker extends Worker {
             byte[] imageBytes = baos.toByteArray();
 
             OkHttpClient client = new OkHttpClient.Builder()
-                    .connectTimeout(90, java.util.concurrent.TimeUnit.SECONDS)
-                    .readTimeout(90, java.util.concurrent.TimeUnit.SECONDS)
+                    .connectTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+                    .readTimeout(100, java.util.concurrent.TimeUnit.SECONDS)
+                    .callTimeout(100, java.util.concurrent.TimeUnit.SECONDS)
                     .build();
 
             String prompt =
@@ -73,9 +74,10 @@ public class ImageGenerationWorker extends Worker {
 
             RequestBody requestBody = new MultipartBody.Builder()
                     .setType(MultipartBody.FORM)
-                    .addFormDataPart("model", "gpt-image-1")
+                    .addFormDataPart("model", "gpt-image-1.5")
                     .addFormDataPart("prompt", prompt)
                     .addFormDataPart("size", "1024x1024")
+                    .addFormDataPart("quality", "high")
                     .addFormDataPart(
                             "image",
                             "user.png",
@@ -94,6 +96,7 @@ public class ImageGenerationWorker extends Worker {
             String result = response.body().string();
             if (!response.isSuccessful()) {
                 android.util.Log.e("OPENAI_ERROR", result);
+                mostrarNotificacionError();
                 return Result.failure();
             }
             android.util.Log.d("OPENAI_RESPONSE", result);
@@ -118,6 +121,12 @@ public class ImageGenerationWorker extends Worker {
 
         } catch (Exception e) {
             e.printStackTrace();
+
+            android.util.Log.e("OPENAI_ERROR", e.toString());
+
+            mostrarNotificacionError();
+
+            return Result.failure();
         }
 
         return Result.failure();
@@ -165,5 +174,35 @@ public class ImageGenerationWorker extends Worker {
 
         manager.notify(1, builder.build());
     }
+    private void mostrarNotificacionError() {
 
+        Context context = getApplicationContext();
+
+        NotificationManager manager =
+                (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+
+        String channelId = "imagen_error";
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+
+            NotificationChannel channel =
+                    new NotificationChannel(
+                            channelId,
+                            "Error de generación",
+                            NotificationManager.IMPORTANCE_HIGH
+                    );
+
+            manager.createNotificationChannel(channel);
+        }
+
+        NotificationCompat.Builder builder =
+                new NotificationCompat.Builder(context, channelId)
+                        .setContentTitle("Error al generar imagen")
+                        .setContentText("Hubo un problema al generar la imagen. Inténtalo nuevamente.")
+                        .setSmallIcon(android.R.drawable.ic_dialog_alert)
+                        .setPriority(NotificationCompat.PRIORITY_HIGH)
+                        .setAutoCancel(true);
+
+        manager.notify(2, builder.build());
+    }
 }
