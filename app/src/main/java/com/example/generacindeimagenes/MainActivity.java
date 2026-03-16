@@ -2,6 +2,7 @@ package com.example.generacindeimagenes;
 
 import androidx.work.Data;
 import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 import java.io.FileOutputStream;
 
@@ -39,6 +40,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.exifinterface.media.ExifInterface;
 
+import com.bumptech.glide.Glide;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.mlkit.vision.common.InputImage;
@@ -69,6 +71,8 @@ public class MainActivity extends AppCompatActivity implements OnSuccessListener
 
     private TextView txtResults;
     private ImageView mImageView;
+    private View loadingLayout;
+    private ImageView loadingGif;
     private Button btnContinuar;
 
     private String nacionalidadDetectada = "";
@@ -100,6 +104,8 @@ public class MainActivity extends AppCompatActivity implements OnSuccessListener
 
         mImageView = findViewById(R.id.image_view);
         btnContinuar = findViewById(R.id.button2);
+        loadingLayout = findViewById(R.id.loadingLayout);
+        loadingGif = findViewById(R.id.loadingGif);
 
         galleryLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
@@ -266,6 +272,10 @@ public class MainActivity extends AppCompatActivity implements OnSuccessListener
             return;
         }
 
+        // Mostrar GIF de carga y fondo oscuro
+        loadingLayout.setVisibility(View.VISIBLE);
+        Glide.with(this).asGif().load(R.drawable.cargando).into(loadingGif);
+
         Toast.makeText(this, "Validando rostro...", Toast.LENGTH_SHORT).show();
 
         InputImage image = InputImage.fromBitmap(mSelectedImage, 0);
@@ -274,12 +284,14 @@ public class MainActivity extends AppCompatActivity implements OnSuccessListener
         detector.process(image)
                 .addOnSuccessListener(faces -> {
                     if (faces.isEmpty()) {
+                        loadingLayout.setVisibility(View.GONE);
                         Toast.makeText(this, "No se detectó ningún rostro. Por favor, sube una foto más clara.", Toast.LENGTH_LONG).show();
                     } else {
                         ejecutarDeteccionConOpenAI();
                     }
                 })
                 .addOnFailureListener(e -> {
+                    loadingLayout.setVisibility(View.GONE);
                     Toast.makeText(this, "Error al validar la imagen", Toast.LENGTH_SHORT).show();
                 });
     }
@@ -374,6 +386,7 @@ public class MainActivity extends AppCompatActivity implements OnSuccessListener
 
                     if (encontrada) {
                         runOnUiThread(() -> {
+                            loadingLayout.setVisibility(View.GONE);
                             Toast.makeText(this, "Nacionalidad: " + nacionalidadDetectada, Toast.LENGTH_LONG).show();
                             // ACTIVAR EL BOTÓN CONTINUAR AQUÍ
                             btnContinuar.setEnabled(true);
@@ -381,12 +394,16 @@ public class MainActivity extends AppCompatActivity implements OnSuccessListener
                         });
                     } else {
                         runOnUiThread(() -> {
+                            loadingLayout.setVisibility(View.GONE);
                             Toast.makeText(this, "No se pudo identificar una nacionalidad válida.", Toast.LENGTH_LONG).show();
                         });
                     }
+                } else {
+                    runOnUiThread(() -> loadingLayout.setVisibility(View.GONE));
                 }
 
             } catch (Exception e) {
+                runOnUiThread(() -> loadingLayout.setVisibility(View.GONE));
                 e.printStackTrace();
             }
         }).start();
@@ -404,16 +421,11 @@ public class MainActivity extends AppCompatActivity implements OnSuccessListener
             return;
         }
 
+        // Mostrar GIF de carga y fondo oscuro
+        loadingLayout.setVisibility(View.VISIBLE);
+        Glide.with(this).asGif().load(R.drawable.cargando).into(loadingGif);
+
         Bitmap imageReady = procesarImagenParaOpenAI(mSelectedImage);
-
-        /*ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        imageReady.compress(Bitmap.CompressFormat.PNG, 100, baos);
-        String base64 = Base64.encodeToString(baos.toByteArray(), Base64.DEFAULT);
-
-        Data inputData = new Data.Builder()
-                .putString("imagen", base64)
-                .putString("nacionalidad", nacionalidadDetectada)
-                .build();*/
 
         File file = new File(getCacheDir(), "image.png");
 
@@ -440,6 +452,22 @@ public class MainActivity extends AppCompatActivity implements OnSuccessListener
 
         // ejecutar el nuevo
         WorkManager.getInstance(this).enqueue(workRequest);
+
+        // Ocultar el GIF cuando el trabajo termine y navegar
+        WorkManager.getInstance(this).getWorkInfoByIdLiveData(workRequest.getId())
+                .observe(this, workInfo -> {
+                    if (workInfo != null && workInfo.getState().isFinished()) {
+                        loadingLayout.setVisibility(View.GONE);
+                        if (workInfo.getState() == WorkInfo.State.SUCCEEDED) {
+                            // Guardamos la nacionalidad para mostrarla en la siguiente pantalla
+                            ImageHolder.nationality = nacionalidadDetectada;
+                            
+                            // Navegar a MainActivity2
+                            Intent intent = new Intent(MainActivity.this, MainActivity2.class);
+                            startActivity(intent);
+                        }
+                    }
+                });
 
         Toast.makeText(this, "Generando imagen en segundo plano...", Toast.LENGTH_LONG).show();
     }

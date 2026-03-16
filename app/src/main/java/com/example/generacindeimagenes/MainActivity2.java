@@ -1,17 +1,13 @@
 package com.example.generacindeimagenes;
 
-import android.content.ContentResolver;
-import android.content.ContentValues;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
-import android.provider.MediaStore;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -27,6 +23,7 @@ import java.io.OutputStream;
 
 public class MainActivity2 extends AppCompatActivity {
     ImageView imageView;
+    TextView tvNacionalidad;
     Button btnDescargar;
     Button btnVolver;
 
@@ -54,6 +51,7 @@ public class MainActivity2 extends AppCompatActivity {
         });
 
         imageView = findViewById(R.id.image_view2);
+        tvNacionalidad = findViewById(R.id.tvNacionalidadResultado);
         btnDescargar = findViewById(R.id.btdescargar);
         btnVolver = findViewById(R.id.btnVolver);
 
@@ -61,10 +59,13 @@ public class MainActivity2 extends AppCompatActivity {
             imageView.setImageBitmap(ImageHolder.generatedImage);
         }
 
+        if (ImageHolder.nationality != null && !ImageHolder.nationality.isEmpty()) {
+            tvNacionalidad.setText(ImageHolder.nationality);
+        }
+
         btnDescargar.setOnClickListener(v -> abrirSelectorDeArchivos());
         
         btnVolver.setOnClickListener(v -> {
-            // Regresa a MainActivity limpiando el stack para evitar comportamiento extraño
             Intent intent = new Intent(MainActivity2.this, MainActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             startActivity(intent);
