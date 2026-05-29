@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
+    id("com.google.gms.google-services")
 }
 
 // 1. CARGAMOS local.properties AQUÍ (fuera del bloque android)
@@ -51,6 +52,9 @@ dependencies {
     implementation 'androidx.exifinterface:exifinterface:1.4.2'
     implementation 'androidx.work:work-runtime:2.9.0' // ✅ Una sola vez
     implementation 'com.github.bumptech.glide:glide:4.16.0' // ✅ Para GIFs
+    implementation(platform("com.google.firebase:firebase-bom:34.13.0"))
+    implementation("com.google.firebase:firebase-analytics")
+    implementation("com.google.firebase:firebase-firestore")
     implementation libs.appcompat
     implementation libs.material
     implementation libs.activity
