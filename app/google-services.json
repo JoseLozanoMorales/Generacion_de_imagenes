@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "445826108422",
+    "project_id": "fir-nacionalidadindigena",
+    "storage_bucket": "fir-nacionalidadindigena.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:445826108422:android:3217f87fa0e7482c6c0787",
+        "android_client_info": {
+          "package_name": "com.example.generacindeimagenes"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD1RSqVajqTsOEXnDKLaTlLZZPNbjCLn4M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

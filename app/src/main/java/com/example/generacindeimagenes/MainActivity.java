@@ -43,6 +43,7 @@ import androidx.exifinterface.media.ExifInterface;
 import com.bumptech.glide.Glide;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.mlkit.vision.common.InputImage;
 import com.google.mlkit.vision.face.FaceDetection;
 import com.google.mlkit.vision.face.FaceDetector;
@@ -57,8 +58,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
@@ -74,6 +77,7 @@ public class MainActivity extends AppCompatActivity implements OnSuccessListener
     private View loadingLayout;
     private ImageView loadingGif;
     private Button btnContinuar;
+    private FirebaseFirestore db;
 
     private String nacionalidadDetectada = "";
     private String currentPhotoPath;
@@ -97,6 +101,8 @@ public class MainActivity extends AppCompatActivity implements OnSuccessListener
         if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(new String[]{Manifest.permission.CAMERA}, 100);
         }
+
+        db = FirebaseFirestore.getInstance();
 
         if (android.os.Build.VERSION.SDK_INT >= 33) {
             requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 101);
@@ -425,6 +431,9 @@ public class MainActivity extends AppCompatActivity implements OnSuccessListener
         loadingLayout.setVisibility(View.VISIBLE);
         Glide.with(this).asGif().load(R.drawable.cargando).into(loadingGif);
 
+        // GUARDAR EN FIRESTORE
+        guardarNacionalidadEnFirestore(nacionalidadDetectada);
+
         Bitmap imageReady = procesarImagenParaOpenAI(mSelectedImage);
 
         File file = new File(getCacheDir(), "image.png");
@@ -492,5 +501,19 @@ public class MainActivity extends AppCompatActivity implements OnSuccessListener
         return Bitmap.createScaledBitmap(squareBitmap, 1024, 1024, true);
     }
 
+    private void guardarNacionalidadEnFirestore(String nacionalidad) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("nacionalidad", nacionalidad);
+        data.put("fecha", new Date());
+
+        db.collection("detecciones")
+                .add(data)
+                .addOnSuccessListener(documentReference -> {
+                    // Se guardó correctamente
+                })
+                .addOnFailureListener(e -> {
+                    // Hubo un error al guardar
+                });
+    }
 
 }
